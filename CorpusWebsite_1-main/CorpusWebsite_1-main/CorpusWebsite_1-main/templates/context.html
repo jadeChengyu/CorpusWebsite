@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context View - Digital Gateway to Asian Literature</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e8f4f8 100%);
+        }
+        .highlight {
+            background: linear-gradient(135deg, #fef08a 0%, #fde047 100%);
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .context-text {
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+    <div class="container mx-auto px-6 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border-t-4 border-blue-500">
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-eye text-blue-500 mr-3"></i>
+                    Context View
+                </h1>
+                <button onclick="window.close()" class="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-5 py-2 rounded-lg hover:from-gray-600 hover:to-gray-700 transition shadow-md flex items-center">
+                    <i class="fas fa-times mr-2"></i>
+                    Close Window
+                </button>
+            </div>
+            <p class="text-gray-600 mt-2 flex items-center">
+                <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+                Viewing the occurrence in its full context within the corpus
+            </p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="bg-white p-8 rounded-xl shadow-lg text-center">
+            <div class="animate-pulse">
+                <div class="h-4 bg-gradient-to-r from-blue-200 to-purple-200 rounded w-3/4 mx-auto mb-4"></div>
+                <div class="h-4 bg-gradient-to-r from-blue-200 to-purple-200 rounded w-full mb-4"></div>
+                <div class="h-4 bg-gradient-to-r from-blue-200 to-purple-200 rounded w-5/6 mx-auto"></div>
+            </div>
+            <p class="text-gray-500 mt-4 flex items-center justify-center">
+                <i class="fas fa-spinner fa-spin mr-2 text-blue-500"></i>
+                Loading context...
+            </p>
+        </div>
+
+        <!-- Context Display -->
+        <div id="context-display" style="display: none;" class="bg-white p-8 rounded-xl shadow-lg border-t-4 border-purple-500">
+            <!-- Metadata -->
+            <div class="mb-6 pb-4 border-b-2 border-gray-200">
+                <div class="flex items-center justify-between mb-3 bg-blue-50 p-3 rounded-lg">
+                    <span class="text-sm text-gray-600 flex items-center">
+                        <i class="fas fa-book text-blue-500 mr-2"></i>
+                        Corpus:
+                    </span>
+                    <span id="corpus-title" class="text-sm font-semibold text-gray-800"></span>
+                </div>
+                <div class="flex items-center justify-between mb-3 bg-purple-50 p-3 rounded-lg">
+                    <span class="text-sm text-gray-600 flex items-center">
+                        <i class="fas fa-map-marker-alt text-purple-500 mr-2"></i>
+                        Position in corpus:
+                    </span>
+                    <span id="position-info" class="text-sm font-semibold text-gray-800"></span>
+                </div>
+                <div class="mt-4">
+                    <button onclick="scrollToHighlight()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition text-sm shadow-md hover:shadow-lg flex items-center">
+                        <i class="fas fa-location-arrow mr-2"></i>
+                        Jump to Highlighted Word
+                    </button>
+                </div>
+            </div>
+
+            <!-- Full Corpus Text -->
+            <div class="context-text text-gray-700 leading-relaxed whitespace-pre-wrap" id="context-text">
+                <!-- Full corpus will be inserted here -->
+            </div>
+
+            <!-- Navigation Help -->
+            <div class="mt-6 pt-4 border-t-2 border-gray-200">
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                    <p class="text-sm text-gray-700 flex items-start">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2 mt-0.5"></i>
+                        <span><strong>Tip:</strong> The highlighted word shows the searched term in its original context within the full corpus. Scroll through to explore the entire text, or use the "Jump to Highlighted Word" button to return to the occurrence.</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Display -->
+        <div id="error-display" style="display: none;" class="bg-red-50 border-2 border-red-300 p-8 rounded-xl shadow-lg">
+            <h2 class="text-xl font-bold text-red-800 mb-2 flex items-center">
+                <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>
+                Error Loading Context
+            </h2>
+            <p id="error-message" class="text-red-600 ml-8"></p>
+            <button onclick="window.close()" class="mt-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-5 py-3 rounded-lg hover:from-red-600 hover:to-red-700 transition shadow-md flex items-center">
+                <i class="fas fa-times mr-2"></i>
+                Close Window
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Get data from sessionStorage using the key from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const contextKey = urlParams.get('key');
+        
+        let corpusId, position, sentence, highlightKeyword, highlightMode, customText;
+        
+        // Retrieve data from sessionStorage
+        if (contextKey) {
+            try {
+                const storedData = sessionStorage.getItem(contextKey);
+                if (storedData) {
+                    const contextData = JSON.parse(storedData);
+                    corpusId = contextData.corpus_id;
+                    
+                    // Check if it's old position-based data or new sentence-based data
+                    if (contextData.sentence !== undefined) {
+                        // New sentence-based approach
+                        sentence = contextData.sentence;
+                        highlightKeyword = contextData.highlight_keyword || '';
+                        highlightMode = contextData.highlight_mode || 'keyword';
+                    } else if (contextData.position !== undefined) {
+                        // Old position-based approach (for backwards compatibility)
+                        position = contextData.position;
+                    }
+                    
+                    // Get text from opener window if available (for large texts)
+                    if (contextData.textStorageKey && window.opener && window.opener.corpusTextStorage) {
+                        customText = window.opener.corpusTextStorage[contextData.textStorageKey];
+                        console.log('Retrieved text from opener window storage');
+                    } else {
+                        customText = '';
+                    }
+                    
+                    // Clean up old entries (older than 1 hour)
+                    cleanupOldStorage();
+                } else {
+                    showError('Context data not found. Please try again from the main page.');
+                }
+            } catch (error) {
+                console.error('Error retrieving context data:', error);
+                showError('Failed to retrieve context data. Please try again.');
+            }
+        } else {
+            showError('No context key provided. Please access this page from a concordance result.');
+        }
+
+        // Load context on page load
+        window.addEventListener('DOMContentLoaded', loadContext);
+
+        async function loadContext() {
+            if (!corpusId) {
+                return; // Error already shown
+            }
+            
+            // Check which mode we're in
+            if (sentence === undefined && position === undefined) {
+                showError('No sentence or position data provided.');
+                return;
+            }
+            
+            try {
+                let requestBody;
+                
+                if (sentence !== undefined) {
+                    // New sentence-based approach
+                    requestBody = {
+                        corpus_id: corpusId,
+                        text: customText || '',
+                        sentence: sentence,
+                        highlight_keyword: highlightKeyword || '',
+                        highlight_mode: highlightMode || 'keyword'
+                    };
+                } else {
+                    // Old position-based approach (backwards compatibility)
+                    requestBody = {
+                        corpus_id: corpusId,
+                        text: customText || '',
+                        position: position
+                    };
+                }
+                
+                const response = await fetch('/api/context', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayContext(data);
+                } else {
+                    showError(data.error || 'Failed to load context');
+                }
+            } catch (error) {
+                console.error('Error loading context:', error);
+                showError('An error occurred while loading the context. Please try again.');
+            }
+        }
+        
+        function cleanupOldStorage() {
+            // Remove context entries older than 1 hour to prevent storage buildup
+            const oneHourAgo = Date.now() - (60 * 60 * 1000);
+            const keysToRemove = [];
+            
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                if (key && key.startsWith('corpus_context_')) {
+                    try {
+                        const data = JSON.parse(sessionStorage.getItem(key));
+                        if (data.timestamp && data.timestamp < oneHourAgo) {
+                            keysToRemove.push(key);
+                        }
+                    } catch (e) {
+                        // Invalid data, remove it
+                        keysToRemove.push(key);
+                    }
+                }
+            }
+            
+            keysToRemove.forEach(key => sessionStorage.removeItem(key));
+        }
+
+        function displayContext(data) {
+            // Hide loading, show content
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('context-display').style.display = 'block';
+
+            // Display corpus title
+            document.getElementById('corpus-title').textContent = data.corpus_title || 'Custom Text';
+
+            // Display position info or highlight mode
+            const positionInfoElement = document.getElementById('position-info');
+            if (data.total_words !== undefined) {
+                // Old position-based display
+                positionInfoElement.textContent = `Word ${data.position + 1} of ${data.total_words.toLocaleString()}`;
+            } else if (data.highlight_mode) {
+                // New mode display
+                if (data.highlight_mode === 'keyword') {
+                    positionInfoElement.textContent = 'Keyword highlighted';
+                } else {
+                    positionInfoElement.textContent = 'Sentence highlighted';
+                }
+            } else {
+                positionInfoElement.textContent = 'Highlighted text';
+            }
+
+            // Display full corpus with highlighted keyword or sentence
+            const contextHTML = `
+                <span class="text-gray-700">${escapeHtml(data.before)}</span><span id="highlighted-word" class="highlight">${escapeHtml(data.keyword)}</span><span class="text-gray-700">${escapeHtml(data.after)}</span>
+            `;
+            document.getElementById('context-text').innerHTML = contextHTML;
+            
+            // Auto-scroll to highlighted word after a brief delay
+            setTimeout(scrollToHighlight, 300);
+        }
+        
+        function scrollToHighlight() {
+            const highlightedElement = document.getElementById('highlighted-word');
+            if (highlightedElement) {
+                highlightedElement.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                // Add a brief flash effect
+                highlightedElement.style.backgroundColor = '#fde047';
+                setTimeout(() => {
+                    highlightedElement.style.backgroundColor = '#fef08a';
+                }, 500);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-display').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
+
